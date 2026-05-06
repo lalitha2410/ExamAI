@@ -1,18 +1,32 @@
-# AIScrutiny — Online Exam Script Evaluation
+# ExamAI — AI Based Examination Script Evaluation System
 
-> MERN + Python/Flask NLP project from the SDP report by Pushadapu Kamal Teja & Modalier Subhash, VIT-AP University
+> Automated evaluation of handwritten answer scripts using OCR and NLP — instant, objective, and fair grading for every student.
+
+**VIT-AP University | Senior Design Project 2025–26 | SDP ID: 20250566**
+
+---
+
+## 👨‍💻 Team
+
+| Name | Reg. No. |
+|---|---|
+| Pushadapu Lalitha Sahithi | 22BCE9119 |
+| Gurram Lakshmi Lasya | 22BCE9602 |
+| Nadakurthy Yasasri | 22BCE20086 |
+
+**Guide:** Mr. Bharathi V C, Professor, SCOPE, VIT-AP University
 
 ---
 
 ## 🗂️ Project Structure
 
 ```
-exam-eval/
-├── backend/          ← Express.js API server  (Node.js)
-│   ├── server.js
+ExamAI/
+├── backend/                  ← Node.js Express REST API
+│   ├── server.js             ← 12 API endpoints, JWT auth, OCR proxy
 │   ├── package.json
 │   └── .env
-├── frontend/         ← React.js UI
+├── frontend/                 ← React.js UI
 │   ├── src/
 │   │   ├── App.js
 │   │   ├── AuthContext.js
@@ -29,8 +43,8 @@ exam-eval/
 │   │   │   └── ProfDashboard.js
 │   │   └── styles/global.css
 │   └── package.json
-└── ml/               ← Python Flask NLP scoring service
-    ├── model.py
+└── ml/                       ← Python Flask NLP scoring service
+    ├── model.py              ← BERT + TF-IDF dual-model scoring
     └── requirements.txt
 ```
 
@@ -38,134 +52,202 @@ exam-eval/
 
 ## ⚙️ Prerequisites
 
-| Tool        | Version    |
-|-------------|------------|
-| Node.js     | ≥ 18.x     |
-| npm         | ≥ 9.x      |
-| MongoDB     | ≥ 6.x (local or Atlas) |
-| Python      | ≥ 3.9      |
-| pip         | latest     |
+| Tool | Version |
+|---|---|
+| Node.js | ≥ 18.x |
+| npm | ≥ 9.x |
+| MongoDB | ≥ 6.x (local or Atlas) |
+| Python | ≥ 3.9 |
+| pip | latest |
 
 ---
 
 ## 🚀 Quick Start
 
-### 1 — MongoDB
+### 1 — Clone the Repository
+
+```bash
+git clone https://github.com/lalitha2410/ExamAI.git
+cd ExamAI
+```
+
+### 2 — MongoDB
 
 Start MongoDB locally:
+
 ```bash
-mongod --dbpath /data/db
+mkdir -p C:/data/db
+mongod --dbpath "C:/data/db"
 ```
+
 Or use MongoDB Atlas — update `MONGO_URI` in `backend/.env`.
 
----
-
-### 2 — Backend (Express)
+### 3 — Backend (Node.js Express)
 
 ```bash
 cd backend
 npm install
-npm start          # runs on http://localhost:5000
+node server.js       # runs on http://localhost:5000
 ```
 
 **Environment variables** (`backend/.env`):
-```
+
+```env
 PORT=5000
 MONGO_URI=mongodb://127.0.0.1:27017/ExamEval
 JWT_SECRET=your_secret_key_here
 FLASK_URL=http://127.0.0.1:5001
 ```
 
----
-
-### 3 — ML Service (Python Flask)
+### 4 — ML Service (Python Flask)
 
 ```bash
 cd ml
 pip install -r requirements.txt
-python -m spacy download en_core_web_sm   # one-time
-python model.py                            # runs on http://localhost:5001
+python model.py      # runs on http://localhost:5001
 ```
 
-> **Note:** If Java is not installed, comment out `language-tool-python` in requirements.txt — the app will still work without grammar checking.
+> **Note:** First run will download the `all-MiniLM-L6-v2` BERT model (~80MB). This is a one-time download.
 
----
-
-### 4 — Frontend (React)
+### 5 — Frontend (React)
 
 ```bash
 cd frontend
 npm install
-npm start          # opens http://localhost:3000
+npm start            # opens http://localhost:3000 or 3001
 ```
 
 ---
 
 ## 🌐 Ports Summary
 
-| Service          | Port  |
-|------------------|-------|
-| React frontend   | 3000  |
-| Express backend  | 5000  |
-| Flask ML service | 5001  |
-| MongoDB          | 27017 |
+| Service | Port |
+|---|---|
+| React Frontend | 3000 / 3001 |
+| Express Backend | 5000 |
+| Flask ML Service | 5001 |
+| MongoDB | 27017 |
 
 ---
 
 ## 🔑 How It Works
 
 ### Student Flow
-1. Sign up with VIT registration number + VIT email
-2. Login → see scheduled exams
-3. Open exam → upload handwritten answer images per question
-4. System extracts text via OCR (external API or typed directly)
-5. View results once professor publishes them
+1. Sign up with VIT-AP registration number + `@vitapstudent.ac.in` email
+2. Login → view scheduled active examinations
+3. Open exam → upload handwritten answer image per question
+4. System extracts text via OCR (Google Vision API via backend proxy)
+5. Review extracted text → submit answer
+6. View scores and PASSED / FAILED badge once professor publishes results
 
 ### Professor Flow
-1. Sign up with 5-digit employee ID + VIT email  
-2. Login → Dashboard shows all exams
-3. Post new exam with subject, semester, questions, and time window
-4. Upload correct answers (text) per question
-5. Click **Evaluate Answers** → NLP scores all submissions
-6. Review scores → click **Publish Results**
-
-### Scoring (ML Service)
-The Python service uses:
-- **TF-IDF vectorization** on preprocessed text
-- **Cosine similarity** (80% weight) as the primary metric
-- **Sentiment analysis** via VADER (5% adjustment)
-- **Grammar error penalty** via LanguageTool (optional)
-- **Sentence complexity bonus** via spaCy
+1. Sign up with employee ID + `@vitap.ac.in` email
+2. Login → Dashboard shows all posted examinations with submission counts
+3. Post new exam with subject, semester, questions, and active time window
+4. Upload reference answers (typed text or image via OCR) per question
+5. Click **Evaluate Answers** → AI scores all student submissions instantly
+6. Review AI-generated scores → click **Publish Results**
 
 ---
 
-## 🛡️ Auth
+## 🧠 Scoring Algorithm (ML Service)
 
-- Passwords are hashed with **bcrypt**
+The Python Flask service uses a **dual-model NLP scoring pipeline**:
+
+```
+Score = (0.40 × TF-IDF Cosine Similarity + 0.60 × BERT Semantic Similarity) × 100
+```
+
+| Component | Weight | Library | Purpose |
+|---|---|---|---|
+| TF-IDF Cosine Similarity | 40% | scikit-learn | Lexical overlap matching |
+| BERT Semantic Similarity | 60% | Sentence Transformers (all-MiniLM-L6-v2) | Semantic meaning matching |
+
+### Preprocessing Steps
+1. Convert text to lowercase
+2. Remove punctuation
+3. Remove English stopwords (NLTK)
+4. Preprocessed text → TF-IDF scoring
+5. Original text → BERT encoding (preserves context)
+
+### Feedback Bands
+
+| Score Range | Feedback |
+|---|---|
+| ≥ 75% | Excellent Answer |
+| 50 – 74% | Good Answer |
+| 30 – 49% | Average Answer |
+| 10 – 29% | Poor Answer |
+| < 10% | Incorrect Answer |
+
+---
+
+## 🛡️ Authentication & Security
+
+- Passwords hashed with **bcryptjs** (salt factor: 10)
 - Sessions use **JWT tokens** (24h expiry) stored in localStorage
-- Routes protected by role-based auth middleware
+- All routes (except `/signup` and `/login`) protected by `authMiddleware`
+- **Role-based access control**: Professor and Student roles
+- Student email must contain registration number as substring
+- Student email domain: `@vitapstudent.ac.in`
+- Professor email domain: `@vitap.ac.in`
+- Password rules: min 9 chars, uppercase + lowercase + digit + special char
 
 ---
 
-## 🔧 Development Tips
+## 🖼️ OCR Integration
 
-- The backend has a **JS fallback scorer** in case the Flask service is down
-- Socket.IO enables **real-time exam updates** when a professor posts a new exam
-- The React proxy in `package.json` routes `/api` calls to `localhost:5000`
+Handwritten answer images are processed via **Google Vision OCR API**.
+
+The backend acts as a proxy (`/ocr` endpoint) to bypass browser CORS restrictions:
+
+```
+Frontend → POST /ocr (image) → Node.js Backend → OCR API → extracted text → Frontend
+```
+
+If OCR fails, users can type the answer manually (graceful degradation).
 
 ---
 
 ## 📦 Tech Stack
 
-**Frontend:** React 18, React Router v6, React Toastify, Socket.IO Client  
-**Backend:** Express.js, Mongoose, Socket.IO, bcryptjs, JWT, Multer  
-**ML:** Flask, NLTK (VADER), scikit-learn (TF-IDF + cosine), spaCy, LanguageTool  
-**Database:** MongoDB (with change streams for real-time updates)
+| Layer | Technology |
+|---|---|
+| Frontend | React.js 18, React Router v6, React Toastify |
+| UI Design | Custom CSS, DM Sans, Space Mono, Dark Theme |
+| Backend | Node.js, Express.js 4, Multer, JWT, bcryptjs |
+| ML Service | Python, Flask, Sentence Transformers, scikit-learn, NLTK |
+| Database | MongoDB, Mongoose ODM |
+| OCR | Google Vision API (via backend proxy) |
+| Deployment | Vercel (frontend), Render (backend + ML), MongoDB Atlas |
 
 ---
 
-## 👨‍💻 Authors
+## 🔗 Repository
 
-- **Pushadapu Kamal Teja** (20BCE7452)  
-- **Modalier Subhash** (20BCE7400)  
-- Guided by **Dr. M. Mohamed Iqbal**, VIT-AP University
+[https://github.com/lalitha2410/ExamAI](https://github.com/lalitha2410/ExamAI)
+
+---
+
+## 📋 API Endpoints
+
+| Method | Endpoint | Description |
+|---|---|---|
+| POST | /signup | Register new user |
+| POST | /login | Authenticate and get JWT |
+| POST | /addexam | Create new examination |
+| GET | /examsSchedule | Get active examinations |
+| GET | /previousExams | Get closed examinations |
+| POST | /getProfessorExams | Get professor's exams |
+| POST | /upload | Submit student answer |
+| POST | /profupload | Submit reference answer |
+| POST | /ocr | Extract text from image |
+| POST | /evaluate | Run AI evaluation |
+| POST | /postResult | Publish results |
+| POST | /getUserResults | Get student results |
+
+---
+
+## 📄 License
+
+This project was developed as part of the Senior Design Project at VIT-AP University. All rights reserved by the authors.
